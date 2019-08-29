@@ -1,0 +1,25 @@
+#include <iostream>
+using namespace std;
+
+int main(){
+    
+    int N;
+    int a, b, c;
+    a = 0;
+    b = 1;
+    c = 1;
+    int sum;
+    
+    cout<<"Dame un numero"<<endl;
+    cin>>N;
+    
+    while(c<=N){
+        sum = a+b;
+        cout<<a<<endl;
+        a = b;
+        b = sum;
+        
+        c++;
+    }
+    return 0;
+}
