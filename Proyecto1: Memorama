@@ -1,0 +1,1101 @@
+static enum Status {
+  INICIO,
+  REGLAS,
+  JUEGO,
+  RESOLUCION
+}
+ 
+class Pantalla {
+ Status pantallaActual;
+ Menu menu;
+ Reglas reglas;
+ Memorama memorama;
+ Resolucion resolucion;
+ Fase faseActual;
+
+ Pantalla(Status inical) {
+   this.pantallaActual = inical;
+   this.menu = new Menu();
+   this.reglas = new Reglas();
+   this.memorama = new Memorama();
+   this.resolucion = new Resolucion();
+   setFaseActual();
+ }
+
+ void setStatus(Status status) {
+   this.pantallaActual = status;
+   setFaseActual();
+ }
+
+ void setFaseActual() {
+   switch (pantallaActual) {
+     case INICIO:
+      this.faseActual = this.menu;
+      break;
+     case REGLAS: 
+      this.faseActual = this.reglas;
+      break;
+     case JUEGO:
+      this.memorama.inicializar();
+      this.faseActual = this.memorama;
+      break;
+     case RESOLUCION:
+     this.faseActual = this.resolucion;
+      break;
+   }
+ }
+
+ void dibujarPantallaActual() {
+   this.faseActual.dibujarFase();
+ }
+
+ void onClick() {
+   this.faseActual.onClick();
+ }
+
+ void onKeyReleased(char key) {
+   this.faseActual.onKeyReleased(key);
+ }
+
+}
+
+Pantalla pantalla;
+ 
+void setup() {
+  size(1450,1050);
+  pantalla = new Pantalla(Status.INICIO);
+}
+
+void draw() {
+  pantalla.dibujarPantallaActual();
+}
+
+void keyReleased() {
+  this.pantalla.onKeyReleased(key);
+}
+
+void mouseReleased() {
+  this.pantalla.onClick();
+}
+
+  
+void determinarResultadoDeJugada() {
+  delay(1000);
+  this.pantalla.memorama.determinarResultadoDeJugada();
+}
+
+
+
+
+
+  
+
+class Reglas implements Fase {
+
+  void dibujarFase() {
+    background(52,23,117);
+    PFont f = createFont("OCR A Extended", 48);
+    textFont(f);
+    textAlign(CENTER);
+    fill(255);
+    textSize(70);
+    text("REGLAS:", width/2, 150); 
+    
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("* Cada jugador cuenta con un turno.", 575, 300);
+    
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("* En tu turno puedes levantar dos cartas:", 640, 400);
+    
+    textFont(f);
+    fill(255);
+    textSize(30);
+    text("  -Si las dos cartas son iguales se suma un par a tu puntaje,", 700, 450);
+    
+    textFont(f);
+    fill(255);
+    textSize(30);
+    text("puedes seguir tirando hasta que te equivoques. ", 625, 475);
+    
+    textFont(f);
+    fill(255);
+    textSize(30);
+    text("-Si las cartas no son iguales se voltearanse dara el turno ", 725, 525);
+    
+    textFont(f);
+    fill(255);
+    textSize(30);
+    text("al otro jugador.", 350, 550);
+    
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("* El juego debe continuar hasta que se acaben ", 700, 650);
+    
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("todas las cartas que están boca abajo.", 650, 700);
+  
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("*Al final se cuentan todos los pares que cada", 680, 800);
+    
+    textFont(f);
+    fill(255);
+    textSize(40);
+    text("uno tiene, aquel que tenga más es el ganador.", 700, 850);
+  }
+
+  void onClick() {
+
+  }
+
+  void onKeyReleased(char key) {
+    pantalla.setStatus(Status.JUEGO);
+  }
+}
+class Resolucion implements Fase {
+
+  void dibujarFase() {
+ 
+  }
+  
+  void onClick(){
+    
+  }
+  void onKeyReleased(char key){
+  }
+}
+
+class Carta {
+  int x;
+  int y;
+  Monstruo monstruo;
+  public boolean deFrente = false;
+  
+  
+  Carta(int x, int y, Monstruo monstruo) {
+    this.x = x;
+    this.y = y;
+    this.monstruo = monstruo;
+  }
+  
+  void dibujar() {
+    pushMatrix();
+    fill(255);
+    
+    rect(this.x,this.y, 150,150, 7);
+    
+    if(deFrente) {
+      translate(this.x,this.y);
+      monstruo.dibujarEnCarta();
+    } else {
+      fill(255);
+    }
+    popMatrix();
+  }
+}
+
+interface Fase {
+  void dibujarFase();
+  void onClick();
+  void onKeyReleased(char key);
+}
+public class Jugador {
+  String nombre;
+  int puntuacion;
+
+  public Jugador (String nombre) {
+    this.nombre = nombre;
+    this.puntuacion = 0;
+    
+
+
+ }
+}
+
+class Memorama implements Fase {
+
+  final int numeroDeCartas = 28;
+  final int numeroDeColumnas = 7;
+  final int numeroDeFilas = 4;
+
+  Carta cartas[] = new Carta[numeroDeCartas];
+  int cantidadCartasVolteadasEnTurno = 0;
+  Carta cartasVolteadasEnTurno[] = new Carta[2];
+  int cartasRestantes; 
+  int cantidadCartasVolteadas = 0;
+  PFont f = createFont("OCR A Extended", 48);
+
+  Jugador jugadores[];
+  int jugadorEnTurno;
+
+  Monstruo monstruos[] = {
+    new Monstruo1(),
+    new Monstruo2(),
+    new Monstruo3(),
+    new Monstruo4(),
+    new Monstruo5(),
+    new Monstruo6(),
+    new Monstruo7(),
+    new Monstruo8(),
+    new Monstruo9(),
+    new Monstruo10(),
+    new Monstruo11(),
+    new Monstruo12(),
+    new Monstruo13(),
+    new Monstruo14(),
+    new Monstruo1(),
+    new Monstruo2(),
+    new Monstruo3(),
+    new Monstruo4(),
+    new Monstruo5(),
+    new Monstruo6(),
+    new Monstruo7(),
+    new Monstruo8(),
+    new Monstruo9(),
+    new Monstruo10(),
+    new Monstruo11(),
+    new Monstruo12(),
+    new Monstruo13(),
+    new Monstruo14()
+  };
+
+  void inicializar () {
+    jugadores = new Jugador[]{ new Jugador("Astronauta"), new Jugador("Emperador") };
+    jugadorEnTurno = round(random(0, 1));
+
+    int x = 50;
+    int y = 200;
+    int monstruosRestantes = 27;
+    
+    for(int j = 0; j < numeroDeFilas; j++) {
+      for(int i = 0; i < numeroDeColumnas; i++) {
+        int posicionDeCarta = i + (j * numeroDeColumnas);
+        int posicionDeMonstruo = round(random(0, monstruosRestantes));
+        cartas[posicionDeCarta] = new Carta(x, y, monstruos[posicionDeMonstruo]);
+        recorrerMonstruos(posicionDeMonstruo, monstruosRestantes);
+        monstruosRestantes--;
+        x += 200;
+      }
+      
+      y += 200;
+      x = 50;
+    } 
+  }
+
+void recorrerMonstruos(int posicionARecorrer, int monstruosRestantes) {
+  for(int i = posicionARecorrer; i < monstruosRestantes; i++) {
+    monstruos[i] = monstruos[i + 1];
+  }
+}
+
+  void dibujarFase() {
+    background(52,23,117);
+    color jugadorActual = color(217, 227, 27);
+    color contrincante = color(255);
+    textFont(f);
+
+    fill(jugadorEnTurno == 0 ? jugadorActual : contrincante);
+    text(jugadores[0].nombre + ": " + jugadores[0].puntuacion, 200, 100);
+
+    fill(jugadorEnTurno == 1 ? jugadorActual : contrincante);
+    text(jugadores[1].nombre + ": " + jugadores[1].puntuacion, 1200, 100);
+    
+    for(int i = 0; i < numeroDeCartas; i++) {
+      cartas[i].dibujar();
+    }
+
+  }
+
+  void onClick() {
+    if(cantidadCartasVolteadasEnTurno < 2) {
+      int cartaClickeada = determinarCarta();
+      
+      if (cartaClickeada > -1) {
+        boolean esDiferente = cartasVolteadasEnTurno[0] != cartas[cartaClickeada];
+        boolean estaVolteada = cartas[cartaClickeada].deFrente;
+        
+        if (esDiferente && !estaVolteada) {
+          cartas[cartaClickeada].deFrente = true;
+          cartasVolteadasEnTurno[cantidadCartasVolteadasEnTurno] = cartas[cartaClickeada];
+          cantidadCartasVolteadasEnTurno++;
+        }
+        
+      }
+
+      if(cantidadCartasVolteadasEnTurno == 2) {
+        thread("determinarResultadoDeJugada");
+      }
+    }
+  }
+
+  public void determinarResultadoDeJugada() {
+    Carta primerCarta = cartasVolteadasEnTurno[0];
+    Carta segundaCarta = cartasVolteadasEnTurno[1];
+
+    String primerMonstruo = primerCarta.monstruo.getClass().getSimpleName();
+    String segundoMonstruo = segundaCarta.monstruo.getClass().getSimpleName();
+
+    System.out.println(primerMonstruo + " " + segundoMonstruo);
+
+    if (!primerMonstruo.equals(segundoMonstruo)) {
+      primerCarta.deFrente = false;
+      segundaCarta.deFrente = false;
+      jugadorEnTurno = jugadorEnTurno == 0 ? 1 : 0;
+    } else {
+      jugadores[jugadorEnTurno].puntuacion += 1;
+    }
+
+    System.out.println(jugadores[0].nombre + ": " + jugadores[0].puntuacion);
+    System.out.println(jugadores[1].nombre + ": " + jugadores[1].puntuacion);
+
+    resetVariablesDeTurno();
+  }
+
+  void resetVariablesDeTurno() {
+    cartasVolteadasEnTurno[0] = null;
+    cartasVolteadasEnTurno[1] = null;
+    cantidadCartasVolteadasEnTurno = 0;
+  }
+
+  void onKeyReleased(char key) {
+    pantalla.setStatus(Status.RESOLUCION);
+  }
+  
+  void cantidadCartas() {
+    Carta cantidadCartasVolteadas[] = new Carta[27];
+    cartasRestantes = 0;
+    for(int i = cartasRestantes; i < numeroDeCartas; i++) {
+    cantidadCartasVolteadas[i] = cantidadCartasVolteadas[i + 2];
+  }
+   cantidadCartas();
+    cartasRestantes--;
+ }
+  
+
+  int determinarCarta() {
+    int minFila = 200;
+    int maxFila = 200 + (numeroDeFilas * 200);
+    
+    int minColumna = 50;
+    int maxColumna = 50 + (numeroDeColumnas * 200);
+    
+    boolean clickDentroDeAlto = mouseY >= minFila && mouseY <= maxFila;
+    boolean clickDentroDeAncho = mouseX >= minColumna && mouseX <= maxColumna;
+    
+    if(clickDentroDeAlto && clickDentroDeAncho){
+       int rangoY = round((mouseY - 200) / 200);
+       int rangoX = round((mouseX - 50) / 200);
+       
+       boolean estaDentroDeAltoDeCarta = (mouseY - 200) - (rangoY * 200) < 150;
+       boolean estaDentroDeAnchoDeCarta = (mouseX - 50) - (rangoX * 200) < 150;
+       
+       if(estaDentroDeAltoDeCarta && estaDentroDeAnchoDeCarta) {
+         int posicionDeCarta = rangoX + (rangoY * numeroDeColumnas);
+         return posicionDeCarta;
+       }
+    }
+    return -1;
+  }
+
+ void Ganador(){
+   if (jugadores[0].puntuacion > cartasRestantes) {
+    fill(255);
+    textSize(50);
+    textAlign(CENTER,CENTER);
+    text("Ganó" + jugadores[0],100,100);
+  } else {
+    if (jugadores[1].puntuacion > cartasRestantes) {
+    fill(255);
+    textSize(50);
+    textAlign(CENTER,CENTER);
+    text("Ganó" + jugadores[1],100,100);
+}
+} 
+ }
+}
+
+class Menu implements Fase {
+
+  void dibujarFase() {
+    background(0);
+    PFont f = createFont("OCR A Extended", 48);
+    textFont(f);
+    textAlign(CENTER);
+    fill(217, 227, 27);
+    textSize(70);
+    text("-Alien Invaders-", width/2, 150);
+    
+    String s = "Un jugador se convertirá en el último astronauta encargado de defender la Tierra de los invasores alienígenas, mientras que el otro tomará el papel del emperador espacial encargado de controlar a los alienígenas que invaden la Tierra. Cada vez que el astronauta encuentre un par de cartas el invasor será destruido; si, al contrario, el emperador las encuentra, el monstruo tomara lugar en la Tierra.";
+    textFont(f);
+    textAlign(CENTER);
+    fill(217, 227, 27);
+    textSize(40);
+    text(s, 200,200, 1000, 1000);  
+    
+    textFont(f);
+    fill(217, 227, 27);
+    textSize(30);
+    text("> Presiona cualquier tecla para iniciar", 600, 900);
+  }
+
+  void onClick() {
+
+  }
+
+  void onKeyReleased(char key) {
+    pantalla.setStatus(Status.REGLAS);
+  }
+}
+
+interface Monstruo {
+  void dibujarEnCarta();
+}
+
+class Monstruo1 implements Monstruo {
+  
+  void dibujarEnCarta() {
+    noStroke();
+    fill(168, 50, 50);
+    square(75,75,5);
+    square(75,70,5);
+    square(75,65,5);
+    square(75,80,5);
+    square(75,85,5);
+    square(80,65,5);
+    square(75,80,5);
+    square(75,85,5);
+    square(75,90,5);
+    square(85,60,5);
+    square(85,70,5);
+    square(85,75,5);
+    square(85,80,5);
+    square(85,85,5);
+    square(90,75,5);
+    square(90,80,5);
+    square(90,90,5);
+    square(70,65,5);
+    square(70,80,5);
+    square(70,85,5);
+    square(70,90,5);
+    square(65,60,5);
+    square(65,70,5);
+    square(65,75,5);
+    square(65,80,5);
+    square(65,85,5);
+    square(60,75,5);
+    square(60,80,5);
+    square(60,90,5);
+    square(80,80,5);
+    square(80,85,5);
+    square(80,90,5);
+  } 
+}
+
+class Monstruo2 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(168, 127, 50);
+  square(75,75,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,75,5);
+  square(80,85,5);
+  square(85,55,5);
+  square(85,65,5);
+  square(85,70,5);
+  square(85,75,5);
+  square(85,90,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(90,85,5);
+  square(95,75,5);
+  square(95,80,5);
+  square(100,65,5);
+  square(100,70,5);
+  square(100,75,5);
+  square(70,60,5);
+  square(70,65,5);
+  square(70,75,5);
+  square(70,85,5);
+  square(65,55,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,75,5);
+  square(65,90,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(60,85,5);
+  square(55,75,5);
+  square(55,80,5);
+  square(50,65,5);
+  square(50,70,5);
+  square(50,75,5);
+  }
+}
+
+class Monstruo3 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(148, 168, 50);
+  square(75,75,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,75,5);
+  square(80,90,5);
+  square(80,85,5);
+  square(85,65,5);
+  square(85,85,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(90,85,5);
+  square(90,90,5);
+  square(95,65,5);
+  square(95,70,5);
+  square(70,60,5);
+  square(70,65,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(65,65,5);
+  square(65,75,5);
+  square(65,85,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(60,85,5);
+  square(60,90,5);
+  square(55,65,5);
+  square(55,70,5);
+  }
+}
+
+class Monstruo4 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(54, 168, 50);
+  square(75,75,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,90,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(85,65,5);
+  square(85,80,5);
+  square(85,90,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,90,5);
+  square(95,85,5);
+  square(70,60,5);
+  square(70,65,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(65,65,5);
+  square(65,80,5);
+  square(65,90,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,90,5);
+  square(55,85,5);
+ }
+}
+
+class Monstruo5 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(50, 168, 125);
+  square(75,75,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(70,65,5);
+  square(70,70,5);
+  square(70,80,5);
+  square(70,90,5);
+  square(65,55,5);
+  square(65,60,5);
+  square(65,70,5);
+  square(65,80,5);
+  square(65,85,5);
+  square(60,55,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(60,90,5);
+  square(55,60,5);
+  square(55,80,5);
+  square(55,85,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,80,5);
+  square(80,90,5);
+  square(85,55,5);
+  square(85,60,5);
+  square(85,70,5);
+  square(85,80,5);
+  square(85,85,5);
+  square(90,55,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(90,90,5);
+  square(95,60,5);
+  square(95,80,5);
+  square(95,85,5);
+ }
+}
+
+class Monstruo6 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(50, 164, 168);
+  square(75,75,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,70,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(85,65,5);
+  square(85,75,5);
+  square(85,80,5);
+  square(85,85,5);
+  square(85,90,5);
+  square(85,95,5);
+  square(85,100,5);
+  square(90,65,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(90,85,5);
+  square(95,65,5);
+  square(95,75,5);
+  square(95,90,5);
+  square(100,70,5);
+  square(100,95,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(65,65,5);
+  square(65,75,5);
+  square(65,80,5);
+  square(65,85,5);
+  square(65,90,5);
+  square(65,95,5);
+  square(65,100,5);
+  square(60,65,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(60,85,5);
+  square(55,65,5);
+  square(55,75,5);
+  square(55,90,5);
+  square(50,70,5);
+  square(50,95,5);
+  square(90,100,5);
+  square(60,100,5);
+ }
+}
+
+class Monstruo7 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(50, 121, 168);
+  square(75,75,5);
+  square(75,65,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(85,60,5);
+  square(85,65,5);
+  square(85,85,5);
+  square(85,90,5);
+  square(85,95,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(95,65,5);
+  square(95,70,5);
+  square(95,85,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(55,65,5);
+  square(55,65,5);
+  square(55,70,5);
+  square(55,85,5);
+  square(65,60,5);
+  square(65,65,5);
+  square(65,85,5);
+  square(65,90,5);
+  square(65,95,5);
+ }
+}
+
+class Monstruo8 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(50, 85, 168);
+  square(75,75,5);
+  square(75,55,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,55,5);
+  square(80,60,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(85,60,5);
+  square(85,65,5);
+  square(85,70,5);
+  square(85,80,5);
+  square(90,85,5);
+  square(70,55,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(65,60,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,80,5);
+  square(60,85,5);
+ }
+}
+
+class Monstruo9 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(58, 50, 168);
+  square(75,75,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(80,95,5);
+  square(85,55,5);
+  square(85,65,5);
+  square(85,70,5);
+  square(85,80,5);
+  square(85,85,5);
+  square(85,95,5);
+  square(90,55,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(95,75,5);
+  square(100,70,5);
+  square(100,75,5);
+  square(70,65,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(65,60,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,75,5);
+  square(65,80,5);
+  square(65,85,5);
+  square(65,90,5);
+  square(65,95,5);
+  square(60,55,5);
+  square(60,65,5);
+  square(60,70,5);
+  square(60,80,5);
+  square(60,85,5);
+  square(60,95,5);
+  square(55,55,5);
+  square(55,70,5);
+  square(55,75,5);
+  square(55,80,5);
+  square(50,75,5);
+  square(45,70,5);
+  square(45,75,5);
+ }
+}
+
+class Monstruo10 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(97, 50, 168);
+  square(75,75,5);
+  square(75,55,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(85,65,5);
+  square(85,70,5);
+  square(85,80,5);
+  square(85,85,5);
+  square(85,95,5);
+  square(90,60,5);
+  square(90,65,5);
+  square(90,75,5);
+  square(95,55,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,80,5);
+  square(65,85,5);
+  square(65,95,5);
+  square(60,60,5);
+  square(60,65,5);
+  square(60,75,5);
+  square(55,55,5);
+ }
+}
+
+class Monstruo11 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(129, 50, 168);
+  square(75,55,5);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(75,90,5);
+  square(80,55,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(85,60,5);
+  square(85,70,5);
+  square(85,75,5);
+  square(85,85,5);
+  square(85,95,5);
+  square(90,60,5);
+  square(90,65,5);
+  square(90,70,5);
+  square(90,85,5);
+  square(95,65,5);
+  square(95,70,5);
+  square(95,80,5);
+  square(95,95,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,85,5);
+  square(70,95,5);
+  square(65,60,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,85,5);
+  square(60,65,5);
+  square(60,70,5);
+  square(60,80,5);
+  square(60,95,5);
+ }
+}
+
+class Monstruo12 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(160, 50, 168);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(75,90,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(80,95,5);
+  square(85,60,5);
+  square(85,70,5);
+  square(85,75,5);
+  square(85,85,5);
+  square(85,90,5);
+  square(90,65,5);
+  square(90,70,5);
+  square(90,85,5);
+  square(90,95,5);
+  square(95,75,5);
+  square(95,80,5);
+  square(100,75,5);
+  square(70,60,5);
+  square(70,65,5);
+  square(70,70,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(70,95,5);
+  square(65,60,5);
+  square(65,70,5);
+  square(65,75,5);
+  square(65,85,5);
+  square(65,90,5);
+  square(60,65,5);
+  square(60,70,5);
+  square(60,85,5);
+  square(60,95,5);
+  square(55,75,5);
+  square(55,80,5);
+  square(50,75,5);
+ }
+}
+
+class Monstruo13 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(168, 50, 133);
+  square(75,60,5);
+  square(75,70,5);
+  square(75,80,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,70,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(80,90,5);
+  square(85,65,5);
+  square(85,70,5);
+  square(85,80,5);
+  square(90,70,5);
+  square(90,75,5);
+  square(90,80,5);
+  square(90,85,5);
+  square(90,90,5);
+  square(95,75,5);
+  square(95,90,5);
+  square(70,60,5);
+  square(70,65,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,80,5);
+  square(70,85,5);
+  square(70,90,5);
+  square(65,65,5);
+  square(65,70,5);
+  square(65,80,5);
+  square(60,70,5);
+  square(60,75,5);
+  square(60,80,5);
+  square(60,85,5);
+  square(60,90,5);
+  square(55,75,5);
+  square(55,90,5);
+ }
+}
+
+class Monstruo14 implements Monstruo {
+  
+ void dibujarEnCarta() {
+  noStroke();
+  fill(168, 50, 93);
+  square(75,60,5);
+  square(75,65,5);
+  square(75,75,5);
+  square(75,80,5);
+  square(75,85,5);
+  square(80,60,5);
+  square(80,65,5);
+  square(80,75,5);
+  square(80,80,5);
+  square(80,85,5);
+  square(85,60,5);
+  square(85,70,5);
+  square(85,75,5);
+  square(85,90,5);
+  square(90,55,5);
+  square(90,60,5);
+  square(90,65,5);
+  square(90,80,5);
+  square(70,60,5);
+  square(70,70,5);
+  square(70,75,5);
+  square(70,90,5);
+  square(65,55,5);
+  square(65,60,5);
+  square(65,65,5);
+  square(65,80,5);
+ }
+}
+
